@@ -34,17 +34,34 @@ const STATS = [
 
 export default function AdminDashboard() {
   const router = useRouter();
-useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createBrowserClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) router.replace("/admin/login");
-    };
-    checkAuth();
-  }, [router]);
-  const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
+  const supabase = createBrowserClient(); // Initialized Supabase client
+  
+  // Start with empty array instead of MOCK_POSTS
+  const [posts, setPosts] = useState<Post[]>([]); 
   const [activeTab, setActiveTab] = useState<"all" | "published" | "drafts">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Updated useEffect to handle Auth AND fetch real data
+  useEffect(() => {
+    const checkAuthAndFetchData = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      // Fetch real data from your Supabase 'posts' table
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (data) setPosts(data);
+      if (error) console.error("Error fetching posts:", error);
+    };
+
+    checkAuthAndFetchData();
+  }, [router, supabase]);
 
   const filteredPosts =
     activeTab === "published"
@@ -53,18 +70,38 @@ useEffect(() => {
       ? posts.filter((p) => !p.published)
       : posts;
 
-  const handleDelete = (id: string) => {
-    if (confirm("Delete this post? This cannot be undone.")) {
+  // Updated handleDelete to remove from Supabase database
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this post? This cannot be undone.")) return;
+
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert("Error deleting: " + error.message);
+    } else {
       setPosts((prev) => prev.filter((p) => p.id !== id));
     }
   };
 
-  const handleTogglePublish = (id: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, published: !p.published } : p
-      )
-    );
+  // Updated handleTogglePublish to update Supabase database
+  const handleTogglePublish = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+
+    const { error } = await supabase
+      .from('posts')
+      .update({ published: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      alert("Error updating status: " + error.message);
+    } else {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, published: newStatus } : p))
+      );
+    }
   };
 
   return (
@@ -241,6 +278,65 @@ useEffect(() => {
                           );
                         })}
                       </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${
+                          post.published
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {post.published ? "Published" : "Draft"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-[var(--text-secondary)]">
+                      {formatViews(post.views)}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-[var(--text-secondary)] whitespace-nowrap">
+                      {formatDateShort(post.updated_at)}
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/admin/posts/${post.id}`}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-neon-blue hover:bg-neon-blue/10 transition-all duration-200"
+                          title="Edit"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Link>
+                        <button
+                          onClick={() => handleTogglePublish(post.id, post.published)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-emerald-400 hover:bg-emerald-500/10 transition-all duration-200"
+                          title={post.published ? "Unpublish" : "Publish"}
+                        >
+                          {post.published ? (
+                            <ToggleRight className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <ToggleLeft className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(post.id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+                   </div>
                     </td>
                     <td className="px-5 py-4">
                       <span
