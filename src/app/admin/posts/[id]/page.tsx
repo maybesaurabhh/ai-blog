@@ -1,5 +1,17 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react"; // Add useMemo here
+// ... other imports
+
+export default function PostEditorPage({ params }: { params: { id: string } }) {
+  const isNew = params.id === "new";
+  const router = useRouter();
+  
+  // 1. Memoize the client so it doesn't recreate on every keystroke
+  const supabase = useMemo(() => createBrowserClient(), []); 
+  
+  // ... rest of your state variables
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -54,12 +66,19 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
       setPublished(data.published);
     }
   };
-
   const handleSave = async (publish = false) => {
     if (!title.trim()) return alert("Please add a title");
     setSaving(true);
 
     const { data: { session } } = await supabase.auth.getSession();
+    
+    // Quick safeguard: Ensure session exists before trying to save
+    if (!session) {
+      alert("You must be logged in to save.");
+      setSaving(false);
+      return;
+    }
+
     const wordCount = content.split(/\s+/).filter(Boolean).length;
     const readingTime = Math.max(1, Math.ceil(wordCount / 200));
     const shouldPublish = publish || published;
@@ -73,31 +92,46 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
       tags: selectedTags,
       published: shouldPublish,
       reading_time: readingTime,
-      author_id: session?.user.id,
+      author_id: session.user.id,
       author_name: authorName,
       updated_at: new Date().toISOString(),
       ...(shouldPublish && !published && { published_at: new Date().toISOString() }),
     };
 
     let error;
+    
     if (isNew) {
       const { error: e, data } = await supabase
         .from("posts")
         .insert([postData])
         .select()
         .single();
+      
       error = e;
       if (data) router.push(`/admin/posts/${data.id}`);
+      
     } else {
-      const { error: e } = await supabase
+      // 2. Added .select() to force Supabase to return the updated data
+      const { data, error: e } = await supabase
         .from("posts")
         .update(postData)
-        .eq("id", params.id);
+        .eq("id", params.id)
+        .select(); 
+      
       error = e;
+
+      // 3. Check if the update actually affected any rows
+      console.log("Supabase Update Response:", data, e);
+      if (!error && (!data || data.length === 0)) {
+        alert("Save failed: 0 rows updated. Check your Supabase RLS policies!");
+        setSaving(false);
+        return;
+      }
     }
 
     if (error) {
       alert("Error saving: " + error.message);
+      console.error("Supabase Error:", error);
     } else {
       if (publish) setPublished(true);
       setSaved(true);
@@ -105,6 +139,7 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
     }
     setSaving(false);
   };
+
 
   const handleImageUrl = () => {
     const url = prompt("Enter image URL:");
