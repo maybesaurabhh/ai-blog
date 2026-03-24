@@ -110,11 +110,6 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
     setSaving(false);
   };
 
-  const handleImageUrl = () => {
-    const url = prompt("Enter image URL:");
-    if (url) setCoverImage(url);
-  };
-
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -126,133 +121,49 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
       <div className="sticky top-0 z-40 glass-strong border-b border-[var(--glass-border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/admin" className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
-              <ArrowLeft className="w-4 h-4" /> Dashboard
+            <Link href="/admin" className="text-sm text-[var(--text-secondary)]">
+              <ArrowLeft className="inline w-4 h-4 mr-1" /> Dashboard
             </Link>
-            <span className="text-[var(--glass-border)]">/</span>
-            <span className="text-sm text-[var(--text-primary)] font-medium">
-              {isNew ? "New Post" : "Edit Post"}
-            </span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => handleSave(false)} disabled={saving} className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg glass border border-[var(--glass-border)] text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50">
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-              {saved ? "Saved!" : "Save Draft"}
+            <button onClick={() => handleSave(false)} disabled={saving} className="px-3.5 py-2 rounded-lg glass border border-[var(--glass-border)] text-sm">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             </button>
-            <button onClick={() => handleSave(true)} disabled={saving} className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-neon-blue text-white text-sm font-semibold hover:shadow-neon-blue disabled:opacity-50">
-              <Send className="w-3.5 h-3.5" />
-              {published ? "Update" : "Publish"}
+            <button onClick={() => handleSave(true)} disabled={saving} className="px-3.5 py-2 rounded-lg bg-neon-blue text-white text-sm font-semibold">
+              <Send className="w-4 h-4 inline mr-1" /> {published ? "Update" : "Publish"}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-5">
-            {coverImage ? (
-              <div className="relative rounded-xl overflow-hidden group">
-                <img src={coverImage} alt="Cover" className="w-full aspect-[21/9] object-cover" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button onClick={handleImageUrl} className="px-3 py-1.5 rounded-lg bg-white/20 text-white text-sm backdrop-blur-sm border border-white/20">Change</button>
-                  <button onClick={() => setCoverImage(null)} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-sm backdrop-blur-sm border border-red-500/20">Remove</button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={handleImageUrl} className="w-full aspect-[21/9] rounded-xl glass border border-dashed border-[var(--glass-border)] hover:border-neon-blue/30 flex flex-col items-center justify-center gap-3 text-[var(--text-secondary)]">
-                <ImageIcon className="w-8 h-8" />
-                <span className="text-sm font-medium">Add cover image URL</span>
-              </button>
-            )}
-
-            <textarea value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Post title..." rows={2} className="w-full bg-transparent border-0 border-b border-[var(--glass-border)] pb-4 font-display font-bold text-2xl text-[var(--text-primary)] focus:outline-none resize-none" />
-            <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Brief excerpt..." rows={2} className="w-full bg-transparent border-b border-[var(--glass-border)] pb-4 text-base text-[var(--text-secondary)] focus:outline-none resize-none italic" />
-
-            <div className="glass border border-[var(--glass-border)] rounded-xl overflow-hidden">
-              <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your post in Markdown..." className="w-full min-h-[500px] p-5 bg-transparent text-[var(--text-primary)] font-mono text-sm focus:outline-none resize-none leading-relaxed" />
-            </div>
+            <textarea 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} 
+              placeholder="Post title..." 
+              className="w-full bg-transparent border-b border-[var(--glass-border)] text-2xl font-bold focus:outline-none" 
+            />
+            <textarea 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              placeholder="Write content here..." 
+              className="w-full min-h-[400px] bg-transparent focus:outline-none resize-none" 
+            />
           </div>
-
           <div className="space-y-5">
-            <div className="glass border border-[var(--glass-border)] rounded-xl p-5">
-              <h3 className="text-xs font-semibold tracking-widest uppercase text-[var(--text-secondary)] mb-4">Tags</h3>
+            <div className="glass p-5 rounded-xl border border-[var(--glass-border)]">
+              <h3 className="text-xs font-bold uppercase mb-4">Tags</h3>
               <div className="flex flex-wrap gap-2">
-                {TAGS.map((tag) => {
-                  const c = getTagColor(tag);
-                  const isSelected = selectedTags.includes(tag);
-                  return (
-                    <button key={tag} onClick={() => toggleTag(tag)} className="text-xs px-2.5 py-1 rounded-full border transition-all duration-200" style={isSelected ? { background: c.bg, color: c.text, borderColor: c.border } : { background: "transparent", color: "var(--text-secondary)", borderColor: "var(--glass-border)" }}>
-                      {isSelected && "✓ "}{tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-esize-none leading-relaxed"
-                />
-              </div>
-            ) : (
-              <div className="glass border border-[var(--glass-border)] rounded-xl p-8 min-h-[500px]">
-                <h1 className="font-display font-bold text-2xl text-[var(--text-primary)] mb-4">{title || "Untitled"}</h1>
-                <p className="italic text-[var(--text-secondary)] mb-4">{excerpt}</p>
-                <pre className="text-[var(--text-secondary)] whitespace-pre-wrap font-sans text-sm leading-relaxed">{content || "No content yet..."}</pre>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-5">
-            <div className="glass border border-[var(--glass-border)] rounded-xl p-5">
-              <h3 className="text-xs font-semibold tracking-widest uppercase text-[var(--text-secondary)] mb-4">Status</h3>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--text-primary)]">Visibility</span>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
-                  published ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                }`}>
-                  {published ? "Published" : "Draft"}
-                </span>
-              </div>
-            </div>
-
-            <div className="glass border border-[var(--glass-border)] rounded-xl p-5">
-              <h3 className="text-xs font-semibold tracking-widest uppercase text-[var(--text-secondary)] mb-4">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {TAGS.map((tag) => {
-                  const c = getTagColor(tag);
-                  const isSelected = selectedTags.includes(tag);
-                  return (
-                    <button key={tag} onClick={() => toggleTag(tag)}
-                      className="text-xs px-2.5 py-1 rounded-full border transition-all duration-200"
-                      style={isSelected
-                        ? { background: c.bg, color: c.text, borderColor: c.border }
-                        : { background: "transparent", color: "var(--text-secondary)", borderColor: "var(--glass-border)" }
-                      }
-                    >
-                      {isSelected && "✓ "}{tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="glass border border-[var(--glass-border)] rounded-xl p-5">
-              <h3 className="text-xs font-semibold tracking-widest uppercase text-[var(--text-secondary)] mb-4">Stats</h3>
-              <div className="space-y-2">
-                {[
-                  { label: "Words", value: content.split(/\s+/).filter(Boolean).length },
-                  { label: "Characters", value: content.length },
-                  { label: "Reading Time", value: `${Math.max(1, Math.ceil(content.split(/\s+/).filter(Boolean).length / 200))} min` },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between">
-                    <span className="text-xs text-[var(--text-secondary)]">{label}</span>
-                    <span className="text-xs font-semibold text-[var(--text-primary)]">{value}</span>
-                  </div>
+                {TAGS.map((tag) => (
+                  <button 
+                    key={tag} 
+                    onClick={() => toggleTag(tag)}
+                    className={`text-xs px-2 py-1 rounded-full border ${selectedTags.includes(tag) ? 'bg-neon-blue text-white' : 'border-[var(--glass-border)]'}`}
+                  >
+                    {tag}
+                  </button>
                 ))}
               </div>
             </div>
@@ -261,4 +172,4 @@ esize-none leading-relaxed"
       </div>
     </div>
   );
-}
+      }
