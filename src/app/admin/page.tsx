@@ -1,4 +1,5 @@
 "use client";
+import { createBrowserClient } from "@/lib/supabase";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -33,6 +34,14 @@ const STATS = [
 
 export default function AdminDashboard() {
   const router = useRouter();
+useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createBrowserClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) router.replace("/admin/login");
+    };
+    checkAuth();
+  }, [router]);
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [activeTab, setActiveTab] = useState<"all" | "published" | "drafts">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
