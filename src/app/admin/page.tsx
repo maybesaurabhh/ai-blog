@@ -1,39 +1,90 @@
 "use client";
 import { createBrowserClient } from "@/lib/supabase";
-import { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-  LayoutDashboard,
-  FileText,
-  PlusCircle,
-  LogOut,
-  Eye,
-  Clock,
-  TrendingUp,
-  Zap,
-  Edit,
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
-  Settings,
-} from "lucide-react";
-import { formatDateShort, formatViews, getTagColor } from "@/lib/utils";
-import type { Post } from "@/types";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
-const STATS = [
-  { label: "Total Posts", icon: FileText, value: "24", change: "+3 this month", color: "#4f9eff" },
-  { label: "Total Views", icon: Eye, value: "94.2K", change: "+12% this week", color: "#a855f7" },
-  { label: "Avg. Read Time", icon: Clock, value: "7.4m", change: "Across all posts", color: "#22d3ee" },
-  { label: "Top Performing", icon: TrendingUp, value: "12.8K", change: "AGI article views", color: "#34d399" },
-];
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const supabase = useMemo(() => createBrowserClient(), []);
-  
-  const [posts, setPosts] = useState<Post[]>([]); 
+  const supabase = createBrowserClient();
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. LOAD REAL DATA
+  const fetchPosts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      alert("DB Error: " + error.message);
+    } else {
+      console.log("Data received:", data);
+      setPosts(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  // 2. TOGGLE PUBLISH
+  const handleToggle = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('posts')
+      .update({ published: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      alert("Update Failed: " + error.message);
+    } else {
+      alert("✅ Updated in Database!");
+      fetchPosts(); // Reload fresh data
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', background: '#111', color: '#fff', minHeight: '100vh' }}>
+      <h1>Admin Debug Mode</h1>
+      <button onClick={fetchPosts} style={{ padding: '10px', background: 'blue', color: 'white' }}>
+        🔄 Force Refresh Data
+      </button>
+
+      {loading ? (
+        <p>Loading from Supabase...</p>
+      ) : (
+        <table style={{ width: '100%', marginTop: '20px', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid #444' }}>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {posts.length === 0 ? (
+              <tr><td colSpan={3}>No posts found in database.</td></tr>
+            ) : (
+              posts.map((post) => (
+                <tr key={post.id} style={{ borderBottom: '1px solid #222' }}>
+                  <td>{post.title}</td>
+                  <td>{post.published ? "🟢 Published" : "⚪ Draft"}</td>
+                  <td>
+                    <button onClick={() => handleToggle(post.id, post.published)}>
+                      Toggle Status
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
   const [activeTab, setActiveTab] = useState<"all" | "published" | "drafts">("all");
 
   useEffect(() => {
