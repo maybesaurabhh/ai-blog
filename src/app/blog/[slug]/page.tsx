@@ -8,7 +8,8 @@ import ReadingProgress from "@/components/blog/ReadingProgress";
 import PostContent from "@/components/blog/PostContent";
 import { MOCK_POSTS } from "@/lib/posts";
 import { formatDate, getTagColor, getRandomGradient, formatViews } from "@/lib/utils";
-import { JsonLd, articleSchema, breadcrumbSchema } from "@/lib/seo";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { articleSchema, breadcrumbSchema } from "@/lib/seo";
 import { ArrowLeft, Clock, Eye, Calendar } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

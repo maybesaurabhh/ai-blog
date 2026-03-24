@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, Syne, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
-import { JsonLd, websiteSchema, organizationSchema } from "@/lib/seo";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { websiteSchema, organizationSchema } from "@/lib/seo";
 import "@/styles/globals.css";
 
 const dmSans = DM_Sans({

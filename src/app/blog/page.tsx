@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import PostCard from "@/components/blog/PostCard";
-import { JsonLd, blogSchema, breadcrumbSchema } from "@/lib/seo";
+import { JsonLd } from "@/components/ui/JsonLd";
+import { blogSchema, breadcrumbSchema } from "@/lib/seo";
 import { MOCK_POSTS } from "@/lib/posts";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
