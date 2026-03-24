@@ -1,30 +1,20 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react"; // Add useMemo here
-// ... other imports
-
-export default function PostEditorPage({ params }: { params: { id: string } }) {
-  const isNew = params.id === "new";
-  const router = useRouter();
-  
-  // 1. Memoize the client so it doesn't recreate on every keystroke
-  const supabase = useMemo(() => createBrowserClient(), []); 
-  
-  // ... rest of your state variables
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, Save, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { TAGS } from "@/types";
 import { getTagColor, generateSlug } from "@/lib/utils";
-import { createBrowserClient, uploadImage, STORAGE_BUCKET } from "@/lib/supabase";
+import { createBrowserClient } from "@/lib/supabase";
 
 export default function PostEditorPage({ params }: { params: { id: string } }) {
   const isNew = params.id === "new";
   const router = useRouter();
-  const supabase = createBrowserClient();
+  
+  // Initialize Supabase once
+  const supabase = useMemo(() => createBrowserClient(), []);
 
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
@@ -36,6 +26,8 @@ export default function PostEditorPage({ params }: { params: { id: string } }) {
   const [saved, setSaved] = useState(false);
   const [activeView, setActiveView] = useState<"write" | "preview">("write");
   const [authorName, setAuthorName] = useState("Admin");
+
+  // ... rest of your code
 
   useEffect(() => {
     checkAuth();
