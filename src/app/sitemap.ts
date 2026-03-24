@@ -4,7 +4,7 @@ import { MOCK_POSTS } from "@/lib/posts";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://synapse.blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const posts = MOCK_POSTS; // swap for await getPosts() in production
+  const posts = MOCK_POSTS;
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
@@ -36,9 +36,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: post.featured ? 0.9 : 0.75,
     }));
 
-  // Tag pages
-  const allTags = [...new Set(posts.flatMap((p) => p.tags))];
-  const tagRoutes: MetadataRoute.Sitemap = allTags.map((tag) => ({
+  const tagsArray = posts.flatMap((p) => p.tags);
+  const uniqueTags = tagsArray.filter((tag, index) => tagsArray.indexOf(tag) === index);
+
+  const tagRoutes: MetadataRoute.Sitemap = uniqueTags.map((tag) => ({
     url: `${BASE_URL}/blog?tag=${encodeURIComponent(tag)}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
