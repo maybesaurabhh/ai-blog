@@ -64,32 +64,45 @@ export default function AdminDashboard() {
       : posts;
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this post? This cannot be undone.")) return;
+    const handleDelete = async (id: string) => {
+    if (!confirm("Delete this post?")) return;
+    alert("Attempting to delete ID: " + id);
 
-    const { error } = await supabase.from('posts').delete().eq('id', id);
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id);
 
     if (error) {
-      alert("Error deleting: " + error.message);
+      alert("❌ DELETE ERROR: " + error.message);
     } else {
+      alert("✅ DELETED from database!");
       setPosts((prev) => prev.filter((p) => p.id !== id));
     }
   };
 
   const handleTogglePublish = async (id: string, currentStatus: boolean) => {
     const newStatus = !currentStatus;
-    const { error } = await supabase
+    alert("Updating ID: " + id + " to " + (newStatus ? "Published" : "Draft"));
+
+    const { data, error } = await supabase
       .from('posts')
       .update({ published: newStatus })
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) {
-      alert("Update failed: " + error.message);
+      alert("❌ UPDATE ERROR: " + error.message);
+    } else if (data && data.length === 0) {
+      alert("❓ SUCCESS status, but 0 rows changed. Check if ID exists in Supabase.");
     } else {
+      alert("✅ DATABASE UPDATED!");
       setPosts((prev) =>
         prev.map((p) => (p.id === id ? { ...p, published: newStatus } : p))
       );
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex">
